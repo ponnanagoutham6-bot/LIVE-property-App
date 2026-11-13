@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LIVE Property App</title>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f3f5f8;color:#202938}
+header{background:#173d75;color:white;padding:20px 15px;text-align:center}
+header h1{margin:0;font-size:30px}
+header p{margin:6px 0 0;font-size:14px}
+.container{max-width:650px;margin:18px auto;padding:16px}
+.panel,.property-card{background:white;padding:16px;margin-bottom:15px;border-radius:12px;box-shadow:0 2px 8px #0000000d}
+h2{margin-top:0;color:#173d75}
+.category-button{display:block;width:100%;padding:17px;margin:10px 0;border:2px solid #d5deeb;border-radius:10px;background:white;color:#173d75;font-size:17px;font-weight:bold;text-align:left;cursor:pointer}
+.category-button.selected{background:#173d75;color:white;border-color:#173d75}
+button,.action-link{display:inline-block;border:none;border-radius:8px;padding:12px 15px;margin:5px 4px 5px 0;background:#173d75;color:white;font-size:15px;text-decoration:none;cursor:pointer}
+.secondary{background:#e5ebf3;color:#173d75}
+.danger{background:#b42318;color:white}
+label{display:block;font-weight:bold;margin-top:14px;margin-bottom:6px}
+input,select,textarea{width:100%;padding:12px;border:1px solid #cbd3df;border-radius:8px;font-size:16px;background:white}
+textarea{min-height:90px;resize:vertical}
+.full-button{width:100%;margin-top:18px}
+.muted{color:#596579;font-size:14px}
+.property-card h3{margin-top:0;margin-bottom:8px;overflow-wrap:anywhere}
+.property-card p{overflow-wrap:anywhere;line-height:1.5}
+.status{font-weight:bold;color:#167647}
+.status.unavailable{color:#b42318}
+.empty-message{padding:20px;text-align:center;background:white;border-radius:10px;color:#596579}
+.page{display:none}
+.page.active{display:block}
+.category-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:15px 0}
+.category-grid .category-button{min-width:0;padding:16px 8px;margin:0;text-align:center;font-size:16px;overflow-wrap:anywhere}
+.photo-grid{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0}
+.photo-grid img{width:95px;height:95px;object-fit:cover;border-radius:8px}
+@media(max-width:360px){
+ .container{padding:10px}
+ .category-grid{gap:8px}
+ .category-grid .category-button{font-size:14px}
+}
+</style>
+</head>
+
+<body>
+<header>
+<h1>LIVE</h1>
+<p>Every Place. One Platform.</p>
+</header>
+
+<main>
+<section id="home" class="page active">
+<div class="container">
+<div class="panel">
+<h2>Find Your Property</h2>
+<p class="muted">Choose Hostel or Flat to view available listings.</p>
+
+<div class="category-grid">
+<button class="category-button selected" onclick="openCategory('Hostel')">Hostel</button>
+<button class="category-button" onclick="openCategory('Flat')">Flat</button>
+</div>
+</div>
+
+<div class="panel">
+<button class="full-button" onclick="showPostForm()">+ Post a Property</button>
+<button class="full-button secondary" onclick="openMyListings()">My Listings</button>
+</div>
+</div>
+</section>
+
+<section id="categoryPage" class="page">
+<div class="container">
+<button class="secondary" onclick="goBack()">← Back</button>
+<h2 id="categoryTitle">Hostel Listings</h2>
+<label for="locationSearch">Search by location</label>
+<input id="locationSearch" type="search" placeholder="Enter a city or area" oninput="renderProperties()">
+<div id="propertyListings"></div>
+</div>
+</section>
+
+<section id="postForm" class="page">
+<div class="container">
+<div class="panel">
+<button class="secondary" onclick="goBack()">← Back</button>
+<h2 id="formHeading">Post a Property</h2>
+<p class="muted">Enter your real property details below.</p>
+
+<form id="propertyForm">
+<label for="propertyType">Property Category</label>
+<select id="propertyType" required>
+<option value="Hostel">Hostel</option>
+<option value="Flat">Flat</option>
+</select>
+ <div id="hostelTypeField">
+<label for="hostelType">Hostel Type</label>
+<select id="hostelType">
+<option value="">Select Hostel Type</option>
+<option value="Boys Hostel">Boys Hostel</option>
+<option value="Girls Hostel">Girls Hostel</option>
+</select>
+</div>
+
+<label for="propertyTitle">Property Title</label>
+<input id="propertyTitle" type="text" placeholder="Example: Hostel near college" required>
+
+<label for="propertyPrice">Price / Monthly Rent / Fees</label>
+<input id="propertyPrice" type="text" placeholder="Enter the actual amount" required>
+
+<label for="propertyLocation">Location</label>
+<input id="propertyLocation" type="text" placeholder="Area, city" required>
+
+<label for="ownerPhone">Owner Phone Number</label>
+<input id="ownerPhone" type="tel" inputmode="tel" placeholder="Enter contact number" required>
+
+<label for="propertyStatus">Availability</label>
+<select id="propertyStatus" required>
+<option value="Available">Available</option>
+<option value="Rented / Not Available">Rented / Not Available</option>
+</select>
+
+<label for="propertyDescription">Description and Facilities</label>
+<textarea id="propertyDescription" placeholder="Describe rooms, beds, facilities, etc."></textarea>
+
+<label for="propertyPhotos">Upload Property Photos (Multiple)</label>
+<input id="propertyPhotos" type="file" accept="image/*" multiple>
+<p class="muted">Select several photos together. During editing, selecting new photos replaces the old photos.</p>
+<div id="photoMessage" class="muted"></div>
+<div id="photoPreview" class="photo-grid"></div>
+
+<button id="saveButton" class="full-button" type="submit">Save Property</button>
+<button id="cancelEditButton" class="full-button secondary" type="button" style="display:none" onclick="cancelEdit()">Cancel Editing</button>
+</form>
+</div>
+</div>
+</section>
+
+<section id="myListingsPage" class="page">
+<div class="container">
+<button class="secondary" onclick="goBack()">← Back</button>
+<h2>My Listings</h2>
+<p class="muted">Your Hostel and Flat listings saved in this browser are shown here.</p>
+<div id="myListingsContainer"></div>
+</div>
+</section>
+</main>
+
+<script>
+const STORAGE_KEY = "liveProperties";
+const ALLOWED_CATEGORIES = ["Hostel", "Flat"];
+const pageIds = ["home", "categoryPage", "postForm", "myListingsPage"];
+
+let properties = [];
+let selectedCategory = "Hostel";
+let currentPage = "home";
+let pageStack = [];
+let editPropertyId = null;
+let selectedPhotoData = [];
+let photoProcessing = false;
+
+try {
+  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+  properties = Array.isArray(saved) ? saved : [];
+} catch (error) {
+  properties = [];
+}
+
+function saveProperties() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(properties));
+    return true;
+  } catch (error) {
+    alert("Could not save. Storage may be full. Try fewer or smaller photos.");
+    return false;
+  }
+}
+
+function displayPage(pageId) {
+  pageIds.forEach(id => {
+    document.getElementById(id).classList.toggle("active", id === pageId);
+  });
+  currentPage = pageId;
+}
+
+function navigateTo(pageId) {
+  if (!pageIds.includes(pageId) || pageId === currentPage) return;
+
+  pageStack.push(currentPage);
+  displayPage(pageId);
+
+  try {
+    history.pushState({livePage:pageId}, "", "#" + pageId);
+  } catch(error) {}
+}
+
+function goBack() {
+  if (pageStack.length > 0) {
+    try {
+      if (history.state && history.state.livePage) {
+        history.back();
+        return;
+      }
+    } catch(error) {}
+
+    displayPage(pageStack.pop());
+  } else {
+    displayPage("home");
+  }
+}
+
+window.addEventListener("popstate", function() {
+  if (pageStack.length > 0) {
+    displayPage(pageStack.pop());
+  } else {
+    displayPage("home");
+  }
+});
+ function updateHostelTypeVisibility() {
+  const category = document.getElementById("propertyType").value;
+  const field = document.getElementById("hostelTypeField");
+  const select = document.getElementById("hostelType");
+
+  field.style.display = category === "Hostel" ? "block" : "none";
+  select.required = category === "Hostel";
+
+  if (category !== "Hostel") {
+    select.value = "";
+  }
+}
+
+document.getElementById("propertyType").addEventListener(
+  "change",
+  updateHostelTypeVisibility
+);
+
+function openCategory(category) {
+  if (!ALLOWED_CATEGORIES.includes(category)) return;
+
+  selectedCategory = category;
+
+  document.querySelectorAll(".category-grid .category-button").forEach(button => {
+    button.classList.toggle("selected", button.textContent.trim() === category);
+  });
+
+  document.getElementById("categoryTitle").textContent = category + " Listings";
+  document.getElementById("locationSearch").value = "";
+
+  renderProperties();
+  navigateTo("categoryPage");
+}
+
+function resetPhotoSelection() {
+  selectedPhotoData = [];
+  document.getElementById("propertyPhotos").value = "";
+  document.getElementById("photoPreview").replaceChildren();
+  document.getElementById("photoMessage").textContent = "";
+  photoProcessing = false;
+}
+
+function showPostForm() {
+  cancelEdit(false);
+
+  if (!ALLOWED_CATEGORIES.includes(selectedCategory)) {
+    selectedCategory = "Hostel";
+  }
+
+  document.getElementById("propertyType").value = selectedCategory;
+  navigateTo("postForm");
+}
+
+function openMyListings() {
+  renderMyListings();
+  navigateTo("myListingsPage");
+}
+
+function makeElement(tag, className, text) {
+  const element = document.createElement(tag);
+  if (className) element.className = className;
+  if (text !== undefined) element.textContent = text;
+  return element;
+}
+
+function addText(parent, tag, text, className) {
+  const element = makeElement(tag, className, text);
+  parent.appendChild(element);
+  return element;
+}
+
+function showPhotos(parent, photos) {
+  if (!Array.isArray(photos) || !photos.length) return;
+
+  const grid = makeElement("div", "photo-grid");
+
+  photos.forEach(src => {
+    const img = document.createElement("img");
+    img.src = src;
+    img.alt = "Property photo";
+    grid.appendChild(img);
+  });
+
+  parent.appendChild(grid);
+}
+
+function createPropertyCard(property, index, ownerView) {
+  const card = makeElement("article", "property-card");
+
+  addText(card, "h3", property.title || "Property");
+  addText(card, "p", "Category: " + (property.category || "Not specified"));
+  addText(card, "p", "Price: " + (property.price || "Not specified"));
+  addText(card, "p", "Location: " + (property.location || "Not specified"));
+
+  const unavailable = property.status === "Rented / Not Available";
+
+  addText(
+    card,
+    "p",
+    "Status: " + (property.status || "Available"),
+    unavailable ? "status unavailable" : "status"
+  );
+
+  if (property.description) {
+    addText(card, "p", property.description);
+  }
+
+  showPhotos(card, property.photos);
+
+  if (!ownerView && property.phone && !unavailable) {
+    const callLink = makeElement("a", "action-link", "Call Owner");
+    callLink.href = "tel:" + property.phone;
+    card.appendChild(callLink);
+  }
+
+  if (!ownerView && property.location) {
+    const mapsLink = makeElement("a", "action-link", "Get Directions");
+
+    mapsLink.href =
+      "https://www.google.com/maps/dir/?api=1&destination=" +
+      encodeURIComponent(property.location + ", Andhra Pradesh, India");
+
+    mapsLink.target = "_blank";
+    mapsLink.rel = "noopener noreferrer";
+    card.appendChild(mapsLink);
+  }
+
+  if (ownerView) {
+    const editButton = makeElement("button", "", "Edit Property");
+    editButton.type = "button";
+    editButton.addEventListener("click", () => startEdit(property.id));
+    card.appendChild(editButton);
+
+    const deleteButton = makeElement("button", "danger", "Delete My Listing");
+    deleteButton.type = "button";
+
+    deleteButton.addEventListener("click", function() {
+      if (!confirm('Are you sure you want to delete "' +
+          (property.title || "this property") + '"?')) return;
+
+      const oldProperties = properties.slice();
+      properties.splice(index, 1);
+
+      if (saveProperties()) {
+        renderMyListings();
+        renderProperties();
+        alert("Listing deleted.");
+      } else {
+        properties = oldProperties;
+      }
+    });
+
+    card.appendChild(deleteButton);
+  }
+
+  return card;
+}
+
+function renderProperties() {
+  const container = document.getElementById("propertyListings");
+  container.replaceChildren();
+
+  const search = document.getElementById("locationSearch")
+    .value.trim().toLowerCase();
+
+  const matches = properties
+    .map((property, index) => ({property, index}))
+    .filter(item =>
+      ALLOWED_CATEGORIES.includes(item.property.category) &&
+      item.property.category === selectedCategory &&
+      (item.property.location || "").toLowerCase().includes(search)
+    );
+
+  if (!matches.length) {
+    container.appendChild(makeElement(
+      "div",
+      "empty-message",
+      "No listings found. Owners can post their own properties."
+    ));
+    return;
+  }
+
+  matches.forEach(item => {
+    container.appendChild(
+      createPropertyCard(item.property, item.index, false)
+    );
+  });
+}
+
+function renderMyListings() {
+  const container = document.getElementById("myListingsContainer");
+  container.replaceChildren();
+
+  const matches = properties
+    .map((property, index) => ({property, index}))
+    .filter(item => ALLOWED_CATEGORIES.includes(item.property.category));
+
+  if (!matches.length) {
+    container.appendChild(makeElement(
+      "div",
+      "empty-message",
+      "You have not posted any Hostel or Flat properties yet."
+    ));
+    return;
+  }
+
+  matches.forEach(item => {
+    container.appendChild(
+      createPropertyCard(item.property, item.index, true)
+    );
+  });
+}
+
+function startEdit(id) {
+  const property = properties.find(item => item.id === id);
+
+  if (!property || !ALLOWED_CATEGORIES.includes(property.category)) {
+    alert("This listing cannot be edited here.");
+    return;
+  }
+
+  editPropertyId = id;
+
+  document.getElementById("formHeading").textContent = "Edit Property";
+  document.getElementById("saveButton").textContent = "Update Property";
+  document.getElementById("cancelEditButton").style.display = "block";
+
+  document.getElementById("propertyType").value = property.category;
+  document.getElementById("propertyTitle").value = property.title || "";
+  document.getElementById("propertyPrice").value = property.price || "";
+  document.getElementById("propertyLocation").value = property.location || "";
+  document.getElementById("ownerPhone").value = property.phone || "";
+  document.getElementById("propertyStatus").value = property.status || "Available";
+  document.getElementById("propertyDescription").value = property.description || "";
+
+  resetPhotoSelection();
+
+  selectedPhotoData = Array.isArray(property.photos)
+    ? property.photos.slice()
+    : [];
+
+  showPhotos(document.getElementById("photoPreview"), selectedPhotoData);
+
+  document.getElementById("photoMessage").textContent =
+    selectedPhotoData.length
+      ? "Existing photos kept unless you select new ones."
+      : "";
+
+  navigateTo("postForm");
+}
+
+function cancelEdit(goHome = true) {
+  editPropertyId = null;
+
+  document.getElementById("propertyForm").reset();
+  resetPhotoSelection();
+
+  document.getElementById("formHeading").textContent = "Post a Property";
+  document.getElementById("saveButton").textContent = "Save Property";
+  document.getElementById("cancelEditButton").style.display = "none";
+
+  if (goHome) displayPage("home");
+}
+
+function compressPhoto(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onerror = () => reject(new Error("Could not read a photo."));
+
+    reader.onload = function() {
+      const image = new Image();
+
+      image.onerror = () => reject(new Error("One photo could not be opened."));
+
+      image.onload = function() {
+        const maxSide = 1000;
+        const scale = Math.min(
+          1,
+          maxSide / Math.max(image.width, image.height)
+        );
+
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+        resolve(canvas.toDataURL("image/jpeg", 0.72));
+      };
+
+      image.src = reader.result;
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
+document.getElementById("propertyPhotos").addEventListener(
+  "change",
+  async function() {
+    const files = Array.from(this.files || []);
+    if (!files.length) return;
+
+    photoProcessing = true;
+    selectedPhotoData = [];
+
+    document.getElementById("photoPreview").replaceChildren();
+    document.getElementById("photoMessage").textContent =
+      "Preparing photos... please wait before saving.";
+
+    try {
+      const photos = await Promise.all(files.map(compressPhoto));
+
+      selectedPhotoData = photos;
+      showPhotos(document.getElementById("photoPreview"), photos);
+
+      document.getElementById("photoMessage").textContent =
+        photos.length + " photo(s) ready.";
+    } catch(error) {
+      selectedPhotoData = [];
+
+      document.getElementById("photoMessage").textContent =
+        "Some photos could not be processed. Please select them again.";
+
+      alert("Could not process the selected photos. Please try again.");
+    } finally {
+      photoProcessing = false;
+    }
+  }
+);
+
+document.getElementById("propertyForm").addEventListener(
+  "submit",
+  function(event) {
+    event.preventDefault();
+
+    if (photoProcessing) {
+      alert("Please wait until photo processing is complete.");
+      return;
+    }
+
+    const category = document.getElementById("propertyType").value;
+
+    if (!ALLOWED_CATEGORIES.includes(category)) {
+      alert("Please select Hostel or Flat.");
+      return;
+    }
+
+    const property = {
+      category: category,
+      title: document.getElementById("propertyTitle").value.trim(),
+      price: document.getElementById("propertyPrice").value.trim(),
+      location: document.getElementById("propertyLocation").value.trim(),
+      phone: document.getElementById("ownerPhone").value.trim(),
+      status: document.getElementById("propertyStatus").value,
+      description: document.getElementById("propertyDescription").value.trim(),
+      photos: selectedPhotoData.slice()
+    };
+
+    if (!property.title || !property.price ||
+        !property.location || !property.phone) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+
+    const oldProperties = properties.slice();
+    const wasEditing = editPropertyId !== null;
+
+    if (wasEditing) {
+      const index = properties.findIndex(item => item.id === editPropertyId);
+
+      if (index === -1) {
+        alert("Property not found. Please open My Listings and try again.");
+        return;
+      }
+
+      property.id = editPropertyId;
+      properties[index] = property;
+    } else {
+      property.id = Date.now().toString() + "-" +
+        Math.random().toString(36).slice(2, 8);
+
+      properties.push(property);
+    }
+
+    if (!saveProperties()) {
+      properties = oldProperties;
+      return;
+    }
+
+    selectedCategory = property.category;
+
+    document.getElementById("categoryTitle").textContent =
+      selectedCategory + " Listings";
+
+    document.getElementById("locationSearch").value = "";
+
+    cancelEdit(false);
+
+    document.getElementById("propertyType").value = selectedCategory;
+
+    renderProperties();
+    renderMyListings();
+
+    alert(wasEditing
+      ? "Property updated successfully."
+      : "Property saved successfully on this device.");
+
+    navigateTo("categoryPage");
+  }
+);
+
+try {
+  history.replaceState({livePage:"home"}, "", "#home");
+} catch(error) {}
+
+renderProperties();
+</script>
+</body>
+</html>
