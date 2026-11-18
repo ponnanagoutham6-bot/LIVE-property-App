@@ -695,5 +695,12 @@ function verifyPhoneOTP() {
     .catch(error => alert("Invalid OTP"));
 }
 </script>
+ <div id="recaptcha-container"></div>
 </body>
+ <div style="text-align:center; padding:15px;">
+  <h3>Owner Login</h3>
+  <button onclick="signInWithGoogle()">Sign in with Google</button>
+  <br><br>
+  <button onclick="sendPhoneOTP()">Sign in with Phone OTP</button>
+ </div>
 </html>
