@@ -274,6 +274,10 @@ function resetPhotoSelection() {
 }
 
 function showPostForm() {
+ if (!auth.currentUser) {
+  alert("Please sign in before posting a property.");
+  return;
+ }
   cancelEdit(false);
 
   if (!ALLOWED_CATEGORIES.includes(selectedCategory)) {
