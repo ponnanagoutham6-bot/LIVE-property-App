@@ -149,6 +149,19 @@ textarea{min-height:90px;resize:vertical}
 </main>
 
 <script>
+ const firebaseConfig = {
+  apiKey: "AIzaSyBC2QHDkeI1m7xI5Kmj9ab8G2szZNFbYOg",
+  authDomain: "live-property-app.firebaseapp.com",
+  projectId: "live-property-app",
+  storageBucket: "live-property-app.firebasestorage.app",
+  messagingSenderId: "1003184016678",
+  appId: "1:1003184016678:web:0f746535973877b72645e7",
+  measurementId: "G-FN3CKXQYX6"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 const STORAGE_KEY = "liveProperties";
 const ALLOWED_CATEGORIES = ["Hostel", "Flat"];
 const pageIds = ["home", "categoryPage", "postForm", "myListingsPage"];
