@@ -654,6 +654,46 @@ try {
 } catch(error) {}
 
 renderProperties();
+ function signInWithGoogle() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+
+  auth.signInWithPopup(provider)
+    .then(() => {
+      alert("Google Sign-In successful!");
+    })
+    .catch(error => alert(error.message));
+}
+
+let confirmationResult;
+
+function sendPhoneOTP() {
+  const phone = prompt("Enter mobile number with country code:");
+
+  if (!phone) return;
+
+  window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier(
+    "recaptcha-container",
+    { size: "normal" }
+  );
+
+  auth.signInWithPhoneNumber(
+    phone,
+    window.recaptchaVerifier
+  ).then(result => {
+    confirmationResult = result;
+    verifyPhoneOTP();
+  }).catch(error => alert(error.message));
+}
+
+function verifyPhoneOTP() {
+  const otp = prompt("Enter the OTP:");
+
+  if (!otp || !confirmationResult) return;
+
+  confirmationResult.confirm(otp)
+    .then(() => alert("Phone verification successful!"))
+    .catch(error => alert("Invalid OTP"));
+}
 </script>
 </body>
 </html>
